@@ -14,7 +14,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            flex-direction: column;
+            text-align: center;
         }
         .btn {
             display: block;
@@ -23,19 +23,38 @@
             padding: 14px;
             background-color: #000000;
             color: white;
-            text-align: center;
-            text-decoration: none;
             border-radius: 6px;
             font-weight: bold;
             font-size: 16px;
             transition: all 0.3s ease;
             box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+            cursor: pointer; /* Добавлен курсор */
         }
         .btn:hover {
             background-color: #0cc80c;
             color: black;
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(0, 200, 12, 0.6);
+        }
+        .form-group {
+            max-width: 300px;
+            margin: 15px auto;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: rgb(255, 0, 30);
+        }
+        .form-group input {
+            width: calc(100% - 22px); /* Учитываем паддинг */
+            padding: 9px;
+            margin-top: 5px;
+            background-color: #111;
+            color: #00c80c;
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 4px;
         }
         .admin-link {
             font-size: 12px;
@@ -53,40 +72,49 @@
         <h1 style="color:rgb(255,0,0);">ПОРТАЛ ПРАВИТЕЛЬСТВА ШТАТА</h1>
         <a href="employment.html" class="btn">ТРУДОУСТРОЙСТВО</a>
 
-        <!-- Кнопка входа в админку -->
-        <a href="#" class="btn" onclick="openAdminPanel(); return false;">
-            🔐 Вход в админ-панель
-        </a>
+        <!-- ФОРМА ВХОДА В АДМИНКУ -->
+        <div id="login-form-container" style="display:none;">
+            <h2>🔐 Вход в систему</h2>
+            <div class="form-group">
+                <label for="login-input">Логин</label>
+                <input type="text" id="login-input" placeholder="govadmin" value="govadmin">
+            </div>
+            <div class="form-group">
+                <label for="password-input">Пароль</label>
+                <input type="password" id="password-input" placeholder="Введите пароль">
+            </div>
+            <button onclick="attemptLogin()" class="btn full" style="width:100%;">Войти</button>
+        </div>
 
+        <!-- Кнопка "Показать форму" -->
+        <a href="#" class="btn" onclick="showLoginForm(); return false;">
+            🔓 Войти в админ-панель
+        </a>
+        
         <!-- Подсказка -->
-        <a href="#" class="admin-link" onclick="alert('Доступ только у администраторов. Введите правильный пароль.'); return false;">
+        <a href="#" class="admin-link" onclick="alert('Доступ только у администраторов. Используйте логин govadmin.'); return false;">
             ? Как войти
         </a>
     </div>
 
     <script>
-        // === ФУНКЦИЯ ВХОДА В АДМИН-ПАНЕЛЬ ===
-        function openAdminPanel() {
-            const correctPassword = 'admin123'; // 🔴 ЗАМЕНИТЕ НА СВОЙ!
-            const maxAttempts = 3;
-            let attempts = 0;
+        // === ПОКАЗАТЬ ФОРМУ ВХОДА ===
+        function showLoginForm() {
+            document.getElementById('login-form-container').style.display = 'block';
+        }
 
-            while (attempts < maxAttempts) {
-                const pass = prompt('🔐 Введите пароль для входа в админ-панель:');
-                if (pass === null) {
-                    alert('Вход отменён.');
-                    return;
-                }
-                if (pass === correctPassword) {
-                    // Пароль верный — переходим в админку
-                    window.location.href = 'admin.html';
-                    return;
-                }
-                attempts++;
-                alert(`Неверный пароль. Осталось попыток: ${maxAttempts - attempts}`);
+        // === ПОПЫТКА ВХОДА ===
+        function attemptLogin() {
+            const login = document.getElementById('login-input').value.trim();
+            const password = document.getElementById('password-input').value.trim();
+
+            if (!login || !password) {
+                alert('Заполните все поля!');
+                return;
             }
 
-            alert('❌ Доступ запрещён. Превышено количество попыток.');
+            // Перенаправляем на страницу admin.html с параметрами
+            window.location.href = `admin.html?login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`;
         }
     </script>
 </body>
