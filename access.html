@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход по коду</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: rgb(15, 150, 87);
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(255, 0, 30, 0.3);
+        }
+        h2 {
+            color: rgb(255, 0, 30);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        .form-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #00c80c;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            color: #00c80c;
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 12px 24px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+        }
+        .btn:hover {
+            background-color: #0cc80c;
+            color: black;
+        }
+        .error {
+            color: #8B0000;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: rgb(255, 0, 30);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Вход по коду доступа</h2>
+        <p>Введите 8-символьный код, выданный администратором</p>
+
+        <div class="form-group">
+            <label for="access-code">Код доступа</label>
+            <input type="text" id="access-code" placeholder="ABCDEFGH" maxlength="8" autocomplete="off">
+        </div>
+
+        <button onclick="attemptAccess()" class="btn">Войти</button>
+        <p id="error-message" class="error"></p>
+
+        <a href="index.html" class="back-link">← На главную</a>
+    </div>
+
+    <script>
+        // === Попытка входа по коду ===
+        function attemptAccess() {
+            const code = (document.getElementById('access-code')?.value || '').trim().toUpperCase();
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = '';
+
+            if (!code) {
+                errorEl.textContent = 'Введите код доступа';
+                return;
+            }
+
+            if (!/^[A-HJ-NP-Z2-9]{8}$/.test(code)) {
+                errorEl.textContent = 'Код должен быть 8 символов: буквы A-Z (без O, I, L) и цифры 2-9';
+                return;
+            }
+
+            try {
+                const tokens = JSON.parse(localStorage.getItem('access_tokens') || '{}');
+                const token = tokens[code];
+
+                if (!token) {
+                    errorEl.textContent = '❌ Код не найден';
+                    logAccessAttempt(code, 'not_found');
+                    return;
+                }
+
+                if (token.revoked) {
+                    errorEl.textContent = '❌ Код отозван';
+                    logAccessAttempt(code, 'revoked');
+                    return;
+                }
+
+                // Сохраняем сессию
+                sessionStorage.setItem('access_token', code);
+                sessionStorage.setItem('access_role', token.role);
+                sessionStorage.setItem('access_desc', token.description);
+
+                logAccessAttempt(code, 'success');
+                logAction(`Код ${code} вошёл в систему`);
+
+                // Переход в админку
+                window.location.href = 'admin.html';
+            } catch (e) {
+                console.error('Ошибка входа по коду:', e);
+                errorEl.textContent = 'Ошибка системы. Попробуйте позже.';
+            }
+        }
+
+        // === Логирование попыток входа ===
+        function logAccessAttempt(code, status) {
+            const logs = JSON.parse(localStorage.getItem('access_attempts') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                code: code,
+                status: status,
+                ip: 'N/A', // Без сервера — не получить
+                userAgent: navigator.userAgent
+            });
+            if (logs.length > 500) logs.shift();
+            localStorage.setItem('access_attempts', JSON.stringify(logs));
+        }
+
+        // === Лог действий (общий) ===
+        function logAction(message) {
+            const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                admin: 'token_' + (sessionStorage.getItem('access_token') || 'unknown'),
+                action: message
+            });
+            if (logs.length > 1000) logs.shift();
+            localStorage.setItem('admin_logs', JSON.stringify(logs));
+        }
+
+        // === При загрузке ===
+        window.onload = function() {
+            
+            // Если уже вошёл — сразу в админку
+            if (sessionStorage.getItem('access_token')) {
+                window.location.href = 'admin.html';
+            }
+        };
+    </script>
+</body>
+</html>

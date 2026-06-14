@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Официальный портал правительства штата</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: rgb(15, 150, 87);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, #000000, #000000 1px, transparent 1px, transparent 2px);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid rgb(255, 0, 30);
+            position: relative;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 30px;
+            color: rgb(255, 0, 0);
+            text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+        }
+
+        .admin-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #660000;
+            color: white;
+            border: 1px solid rgb(255, 0, 30);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .admin-btn:hover {
+            background-color: #990000;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(255, 0, 30, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .btn {
+            display: block;
+            width: 280px;
+            margin: 20px auto;
+            padding: 14px;
+            background-color: #000000;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+        }
+
+        .btn:hover {
+            background-color: #0cc80c;
+            color: black;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 200, 12, 0.6);
+        }
+
+        /* Скрытые панели */
+        #admin-panel, #apply-form {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: rgb(255, 0, 0);
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgb(255, 0, 30);
+            color: rgb(15, 150, 87);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .requests-list {
+            margin-top: 20px;
+        }
+
+        .request-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid rgb(255, 0, 30);
+            border-radius: 4px;
+        }
+
+        .action-btn {
+            margin-top: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .approve { background: #006400; color: white; }
+        .reject { background: #8B0000; color: white; }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: rgb(255, 0, 0);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ОФИЦИАЛЬНЫЙ ПОРТАЛ ПРАВИТЕЛЬСТВА ШТАТА</h1>
+        <button class="admin-btn" onclick="showAdminLogin()">Вход администратора</button>
+    </div>
+
+    <div class="container" id="main-menu">
+        <a href="general.html" class="btn">ОСНОВНАЯ ИНФОРМАЦИЯ</a>
+        <a href="justice.html" class="btn">МИНИСТЕРСТВО ЮСТИЦИИ</a>
+        <a href="finance.html" class="btn">МИНИСТЕРСТВО ФИНАНСОВ</a>
+        <a href="senate.html" class="btn">СЕНАТ ШТАТА</a>
+        <a href="#" class="btn" onclick="showApplyForm()">ПОДАТЬ ЗАЯВКУ</a>
+    </div>
+
+    <!-- Форма подачи заявки -->
+    <div class="container" id="apply-form">
+        <h2 style="color:rgb(255,0,0); text-align:center;">Подать заявку</h2>
+        <form id="application-form">
+            <div class="form-group">
+                <label>ФИО</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label>Электронная почта</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input type="tel" id="phone">
+            </div>
+            <div class="form-group">
+                <label>Сообщение</label>
+                <textarea id="message" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn" style="width:100%;">Отправить заявку</button>
+        </form>
+        <a href="#" class="back-link" onclick="showMain()">← Назад</a>
+    </div>
+
+    <!-- Панель администратора -->
+    <div class="container" id="admin-panel">
+        <h2 style="color:rgb(255,0,0); text-align:center;">Панель администратора</h2>
+        <div class="requests-list" id="requests-list">
+            <!-- Заявки загружаются сюда -->
+        </div>
+        <a href="#" class="back-link" onclick="showMain()">← Назад</a>
+    </div>
+
+    <!-- Модальное окно входа админа -->
+    <div id="admin-login-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#000; padding:30px; border:1px solid red; border-radius:12px; text-align:center; color:#0f9657;">
+            <h3 style="color:red;">Вход администратора</h3>
+            <input type="password" id="admin-password" placeholder="Пароль" style="padding:10px; margin:10px; width:200px;">
+            <br>
+            <button onclick="loginAdmin()" style="padding:10px 20px; background:#000; color:white; border:1px solid red; cursor:pointer;">Войти</button>
+            <button onclick="closeAdminLogin()" style="padding:10px 20px; background:#660000; color:white; border:1px solid red; cursor:pointer; margin-left:10px;">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // Настройте здесь Discord вебхук
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1495466044771532811/ZoxjpiXd2zBu7s4Pu1fTkBMtCTNIqIpzpWR41-bN36nDUnmdIzkGE1SXChfwRRqrI8tL';
+
+        // Простой пароль для админа
+        const ADMIN_PASSWORD = 'admin';
+
+        // Показать форму заявки
+        function showApplyForm() {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('apply-form').style.display = 'block';
+        }
+
+        // Показать вход админа
+        function showAdminLogin() {
+            document.getElementById('admin-login-modal').style.display = 'flex';
+        }
+
+        // Закрыть окно входа
+        function closeAdminLogin() {
+            document.getElementById('admin-login-modal').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+        }
+
+        // Вход администратора
+        function loginAdmin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('admin-login-modal').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'none';
+                document.getElementById('apply-form').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                loadRequests();
+            } else {
+                alert('Неверный пароль!');
+            }
+        }
+
+        // Показать главное меню
+        function showMain() {
+            document.getElementById('main-menu').style.display = 'block';
+            document.getElementById('apply-form').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+        }
+
+        // Сохранение заявки
+        document.getElementById('application-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const message = document.getElementById('message').value;
+
+            const request = {
+                id: Date.now(),
+                name,
+                email,
+                phone,
+                message,
+                status: 'ожидает'
+            };
+
+            const requests = JSON.parse(localStorage.getItem('applications') || '[]');
+            requests.push(request);
+            localStorage.setItem('applications', JSON.stringify(requests));
+
+            alert('Заявка отправлена Мы свяжемся с вами.');
+            document.getElementById('application-form').reset();
+            showMain();
+        });
+
+        // Загрузка заявок в админку
+        function loadRequests() {
+            const list = document.getElementById('requests-list');
+            list.innerHTML = '';
+            const requests = JSON.parse(localStorage.getItem('applications') || '[]');
+
+            if (requests.length === 0) {
+                list.innerHTML = '<p style="color:rgb(15,150,87);">Заявок пока нет.</p>';
+                return;
+            }
+
+            requests.forEach(req => {
+                const item = document.createElement('div');
+                item.className = 'request-item';
+                item.innerHTML = `
+                    <strong>${req.name}</strong> (${req.email})<br>
+                    Телефон: ${req.phone || 'не указан'}<br>
+                    Сообщение: ${req.message}<br>
+                    <button class="action-btn approve" onclick="approveRequest(${req.id})">Одобрить</button>
+                    <button class="action-btn reject" onclick="rejectRequest(${req.id})">Отклонить</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Одобрить заявку и отправить в Discord    
+        function approveRequest(id) {
+            if (confirm('Отправить заявку в Discord?')) {
+                const requests = JSON.parse(localStorage.getItem('applications') || '[]');
+                const request = requests.find(r => r.id === id);
+                if (request) {
+                    // Отправка в Discord
+                    fetch(DISCORD_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: null,
+                            embeds: [{
+                                title: '✅ Новая одобренная заявка',
+                                color: 5763719,
+                                fields: [
+                                    { name: 'ФИО', value: request.name },
+                                    { name: 'Email', value: request.email },
+                                    { name: 'Телефон', value: request.phone || 'не указан' },
+                                    { name: 'Сообщение', value: request.message }
+                                ],
+                                timestamp: new Date().toISOString()
+                            }]
+                        })
+                    })
+                    .then(() => {
+                        alert('Заявка отправлена в Discord!');
+                        request.status = 'одобрено';
+                        localStorage.setItem('applications', JSON.stringify(requests));
+                        loadRequests();
+                    })
+                    .catch(err => {
+                        console.error('Ошибка отправки в Discord:', err);
+                        alert('Не удалось отправить в Discord. Проверьте вебхук.');
+                    });
+                }
+            }
+        }
+
+        // Отклонить заявку
+        function rejectRequest(id) {
+            if (confirm('Вы уверены, что хотите отклонить заявку?')) {
+                let requests = JSON.parse(localStorage.getItem('applications') || '[]');
+                requests = requests.filter(r => r.id !== id);
+                localStorage.setItem('applications', JSON.stringify(requests));
+                loadRequests();
+                alert('Заявка отклонена.');
+            }
+        }
+
+        // При загрузке — обновляем список, если мы в админке
+        window.onload = function() {
+            if (document.getElementById('admin-panel').style.display === 'block') {
+                loadRequests();
+            }
+        };
+    </script>
+</body>
+</html>

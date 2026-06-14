@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Основная информация</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Читаемый шрифт */
+
+            background-color: #000000;
+            /* Чёрный фон */
+
+            color: rgb(15, 150, 87);
+            /* Зелёный текст */
+
+            margin: 0;
+            padding: 0;
+            /* Без отступов */
+        }
+
+        body::before {
+            /* Фоновая сетка */
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, #000000, #000000 1px, transparent 1px, transparent 2px);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            /* Шапка страницы */
+            text-align: center;
+            padding: 50px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid rgb(255, 0, 30);
+        }
+
+        .header h1 {
+            /* Заголовок */
+            margin: 0;
+            font-size: 28px;
+            color: rgb(255, 0, 0);
+            text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+        }
+
+        .container {
+            /* Основной блок контента */
+            max-width: 900px;
+            /* Максимальная ширина */
+
+            margin: 40px auto;
+            /* Центрирование */
+
+            padding: 40px;
+            /* Отступы внутри */
+
+            background: rgba(0, 0, 0, 0.8);
+            /* Полупрозрачный фон */
+
+            border: 1px solid rgb(255, 0, 30);
+            /* Красная рамка */
+
+            border-radius: 12px;
+            /* Скругление */
+
+            color: rgb(15, 150, 87);
+            /* Цвет текста */
+
+            line-height: 1.8;
+            /* Межстрочный интервал */
+
+            box-shadow: 0 0 15px rgba(255, 0, 30, 0.15);
+            /* Свечение */
+
+            backdrop-filter: blur(5px);
+            /* Размытие фона */
+        }
+
+        .section {
+            /* Блок раздела (руководитель, задачи и т.д.) */
+            margin-bottom: 30px;
+            /* Отступ снизу */
+        }
+
+        .section h3 {
+            /* Подзаголовки разделов */
+            color: rgb(255, 0, 0);
+            margin-bottom: 12px;
+            font-size: 20px;
+        }
+
+        .back-btn {
+            /* Кнопка "Назад" */
+            display: block;
+            width: 240px;
+            margin: 40px auto 0;
+            padding: 14px;
+            background-color: #000000;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+        }
+
+        .back-btn:hover {
+            /* При наведении */
+            background-color: #0cc80c;
+            color: black;
+            box-shadow: 0 0 15px rgba(0, 200, 12, 0.6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ОСНОВНАЯ ИНФОРМАЦИЯ ПРАВИТЕЛЬСТВА</h1>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h3>Руководитель</h3>
+            <p><strong>Джон Смит</strong> — Губернатор штата</p>
+        </div>
+
+        <div class="section">
+            <h3>Основные задачи</h3>
+            <ul>
+                <li>Обеспечение соблюдения Конституции и законов штата</li>
+                <li>Развитие экономики и инфраструктуры</li>
+                <li>Повышение качества образования и здравоохранения</li>
+                <li>Безопасность граждан и борьба с преступностью</li>
+                <li>Экологическая устойчивость и переход к «зелёной» энергетике</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>Ключевые нормативные акты</h3>
+            <ul>
+                <li><a href="docs/ukaz_2023_01.pdf" target="_blank" style="color:rgb(255,0,0);">Указ №2023-01</a> — О реформе системы здравоохранения</li>
+                <li><a href="docs/ukaz_2023_05.pdf" target="_blank" style="color:rgb(255,0,0);">Указ №2023-05</a> — О развитии цифрового правительства</li>
+                <li><a href="docs/ukaz_2024_12.pdf" target="_blank" style="color:rgb(255,0,0);">Указ №2024-12</a> — О налоговых льготах для малого бизнеса</li>
+            </ul>
+            <p><em>Примечание: ссылки условные. Для настоящих документов загрузите PDF или изображения в папку <code>docs</code>.</em></p>
+        </div>
+
+        <a href="government.html" class="back-btn">← НАЗАД В МЕНЮ</a>
+    </div>
+</body>
+</html>

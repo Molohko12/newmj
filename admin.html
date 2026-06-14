@@ -1,0 +1,718 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: rgb(15, 150, 87);
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #000000;
+            color: rgb(255, 0, 30);
+            text-align: center;
+            padding: 20px;
+            border-bottom: 3px solid rgb(255, 0, 30);
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #000000;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            margin: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+        }
+        .btn:hover {
+            background-color: #0cc80c;
+            color: black;
+        }
+        .btn.full { background-color: #8B0000; }
+        .btn.approve { background-color: #006400; }
+        .btn.view { background-color: #4B0082; }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: rgb(255, 0, 30);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .tabs {
+            margin-bottom: 20px;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: rgb(255, 0, 30);
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 4px;
+        }
+        .tab.active {
+            background-color: rgba(255, 0, 30, 0.3);
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 6px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid rgb(255, 0, 30);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: rgba(255, 0, 30, 0.2);
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: #111;
+            color: #00c80c;
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 4px;
+        }
+        code {
+            background: #111;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #00c80c;
+        }
+        .error {
+            color: #8B0000;
+            font-weight: bold;
+        }
+        .otp-input {
+            font-size: 24px;
+            text-align: center;
+            width: 50px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div style="text-align:center; padding:50px;">
+            <h2>🔐 Загрузка...</h2>
+        </div>
+    </div>
+
+    <script>
+        // === Глобальные переменные ===
+        window.currentAdmin = null;
+        window.currentRole = null;
+
+        // === Инициализация ===
+        function initSystem() {
+            if (!localStorage.getItem('admin_system_v2')) {
+                const masterPass = prompt('🔐 Установите пароль для главного админа:');
+                if (!masterPass || masterPass.trim() === '') {
+                    alert('Пароль обязателен!');
+                    return initSystem();
+                }
+
+                const admins = {
+                    'govadmin': {
+                        password: masterPass.trim(),
+                        role: 'full',
+                        created: new Date().toISOString(),
+                        lastLogin: null,
+                        enabled: true
+                    }
+                };
+
+                localStorage.setItem('admin_accounts', JSON.stringify(admins));
+                localStorage.setItem('admin_logs', JSON.stringify([]));
+                localStorage.setItem('admin_system_v2', 'true');
+                sendTelegram(`✅ Система инициализирована. Главный админ: govadmin`);
+            }
+        }
+
+        // === Форма входа ===
+        function showLogin() {
+            document.getElementById('app').innerHTML = `
+                <div style="text-align:center; padding:50px;">
+                    <h2>🔐 Вход в систему</h2>
+                    <div style="max-width:300px; margin:20px auto;">
+                        <div class="form-group">
+                            <label>Логин</label>
+                            <input type="text" id="login" placeholder="govadmin">
+                        </div>
+                        <div class="form-group">
+                            <label>Пароль</label>
+                            <input type="password" id="password" placeholder="Пароль">
+                        </div>
+                        <button onclick="attemptLogin()" class="btn" style="width:100%;">Войти</button>
+                    </div>
+                    <a href="index.html" class="back-link">← На главную</a>
+                </div>
+            `;
+        }
+
+        // === Попытка входа ===
+        function attemptLogin() {
+            const login = (document.getElementById('login')?.value || '').trim();
+            const password = (document.getElementById('password')?.value || '').trim();
+
+            if (!login || !password) {
+                alert('Введите логин и пароль');
+                return;
+            }
+
+            try {
+                const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
+                const user = accounts[login];
+
+                if (!user || !user.enabled) {
+                    alert('❌ Аккаунт не найден или отключён');
+                    logAction(`${login} — попытка входа: аккаунт не найден`);
+                    sendTelegram(`⚠️ Попытка входа: ${login} — не найден`);
+                    return;
+                }
+
+                if (user.password !== password) {
+                    alert('❌ Неверный пароль');
+                    logAction(`${login} — ошибка входа: неверный пароль`);
+                    sendTelegram(`⚠️ Ошибка входа: ${login}`);
+                    return;
+                }
+
+                // Генерация 2FA кода
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                sessionStorage.setItem('otp_code', otp);
+                sessionStorage.setItem('otp_login', login);
+                sessionStorage.setItem('otp_time', Date.now());
+
+                alert(`Код 2FA: ${otp}\n\n(в реальности — отправлен в Telegram)`);
+
+                showOTPForm(login);
+                sendTelegram(`🔐 2FA для ${login}: ${otp}`);
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка системы');
+            }
+        }
+
+        // === Форма 2FA ===
+        function showOTPForm(login) {
+            document.getElementById('app').innerHTML = `
+                <div style="text-align:center; padding:50px;">
+                    <h2>🔐 Двухфакторная аутентификация</h2>
+                    <p>Введите 6-значный код</p>
+                    <div style="display:flex; justify-content:center; gap:10px; margin:20px;">
+                        <input type="text" class="otp-input" maxlength="1" id="o1">
+                        <input type="text" class="otp-input" maxlength="1" id="o2">
+                        <input type="text" class="otp-input" maxlength="1" id="o3">
+                        <input type="text" class="otp-input" maxlength="1" id="o4">
+                        <input type="text" class="otp-input" maxlength="1" id="o5">
+                        <input type="text" class="otp-input" maxlength="1" id="o6">
+                    </div>
+                    <button onclick="verifyOTP()" class="btn">Проверить</button>
+                    <p id="otp-error" class="error"></p>
+                </div>
+            `;
+
+            // Автофокус
+            document.getElementById('o1').focus();
+
+            // Автопереход
+            document.querySelectorAll('.otp-input').forEach((input, index) => {
+                input.oninput = () => {
+                    if (input.value.length === 1 && index < 5) {
+                        document.querySelectorAll('.otp-input')[index + 1].focus();
+                    }
+                };
+            });
+        }
+
+        // === Проверка 2FA ===
+        function verifyOTP() {
+            const code = [
+                document.getElementById('o1')?.value,
+                document.getElementById('o2')?.value,
+                document.getElementById('o3')?.value,
+                document.getElementById('o4')?.value,
+                document.getElementById('o5')?.value,
+                document.getElementById('o6')?.value
+            ].join('');
+
+            const storedCode = sessionStorage.getItem('otp_code');
+            const login = sessionStorage.getItem('otp_login');
+            const time = sessionStorage.getItem('otp_time');
+
+            const errorEl = document.getElementById('otp-error');
+            errorEl.textContent = '';
+
+            if (!storedCode || !login) {
+                errorEl.textContent = 'Сессия истекла';
+                return;
+            }
+
+            if (Date.now() - time > 300000) { // 5 минут
+                errorEl.textContent = 'Код устарел';
+                return;
+            }
+
+            if (code !== storedCode) {
+                errorEl.textContent = 'Неверный код';
+                return;
+            }
+
+            // Успешный вход
+            sessionStorage.removeItem('otp_code');
+            sessionStorage.removeItem('otp_login');
+            sessionStorage.removeItem('otp_time');
+
+            const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
+            const user = accounts[login];
+            user.lastLogin = new Date().toISOString();
+            accounts[login] = user;
+            localStorage.setItem('admin_accounts', JSON.stringify(accounts));
+
+            window.currentAdmin = login;
+            window.currentRole = user.role;
+            logAction(`${login} вошёл в систему (2FA пройдена)`);
+            sendTelegram(`✅ Успешный вход: ${login}`);
+            loadMainInterface();
+        }
+
+        // === Основной интерфейс ===
+        function loadMainInterface() {
+            document.getElementById('app').innerHTML = `
+                <div class="header">
+                    <h1>АДМИН-ПАНЕЛЬ ТРУДОУСТРОЙСТВА</h1>
+                </div>
+                <div class="container">
+                    <div class="tabs">
+                        <div class="tab active" onclick="showTab('requests')">Заявки</div>
+                        <div class="tab" onclick="showTab('users')">Администраторы</div>
+                        <div class="tab" onclick="showTab('logs')">Логи</div>
+                    </div>
+
+                    <div id="requests" class="tab-content active"></div>
+                    <div id="users" class="tab-content"></div>
+                    <div id="logs" class="tab-content"></div>
+
+                    <a href="index.html" class="back-link">← На главную</a>
+                </div>
+            `;
+
+            if (window.currentRole !== 'full') {
+                document.querySelector('.tab[onclick="showTab(\'users\')"]').style.display = 'none';
+            }
+
+            showTab('requests');
+        }
+
+        // === Показ вкладки ===
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'requests') loadRequests();
+            if (tabName === 'users') loadUsersPanel();
+            if (tabName === 'logs') loadLogs();
+        }
+
+        // === Загрузка заявок ===
+        function loadRequests() {
+            const container = document.getElementById('requests');
+            container.innerHTML = '<h3>Заявки на трудоустройство</h3><div id="requests-list"></div>';
+
+            const requests = JSON.parse(localStorage.getItem('employmentRequests') || '[]');
+            const list = document.getElementById('requests-list');
+            list.innerHTML = '';
+
+            if (requests.length === 0) {
+                list.innerHTML = '<p>Нет заявок.</p>';
+                return;
+            }
+
+            requests.forEach((req, index) => {
+                const item = document.createElement('div');
+                item.style.margin = '15px 0';
+                item.style.padding = '15px';
+                item.style.background = 'rgba(0,0,0,0.5)';
+                item.style.border = '1px solid rgb(255,0,30)';
+                item.style.borderRadius = '6px';
+
+                const statusText = req.status === 'отправлена' ? '✅ Одобрена' :
+                                req.status === 'отказано' ? '❌ Отклонена' : '⏳ Ожидает';
+
+                item.innerHTML = `
+                    <strong>Имя:</strong> ${req.name} <br>
+                    <strong>Статик:</strong> ${req.static} <br>
+                    <strong>Discord:</strong> ${req.discord} <br>
+                    <strong>Отдел:</strong> ${req.department || 'Неизвестно'} <br>
+                    <strong>Дата:</strong> ${new Date(req.submittedAt).toLocaleString()} <br>
+                    <strong>Статус:</strong> <span style="color:${req.status === 'отправлена' ? '#006400' : req.status === 'отказано' ? '#8B0000' : '#FFA500'}">${statusText}</span> <br><br>
+                `;
+
+                if (req.status === 'ожидает' && (window.currentRole === 'approve' || window.currentRole === 'full')) {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.textContent = '✅ Одобрить';
+                    approveBtn.className = 'btn approve';
+                    approveBtn.onclick = () => approveRequest(index, req);
+
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.textContent = '❌ Отклонить';
+                    rejectBtn.className = 'btn';
+                    rejectBtn.onclick = () => rejectRequest(index);
+
+                    item.appendChild(approveBtn);
+                    item.appendChild(rejectBtn);
+                }
+
+                list.appendChild(item);
+            });
+        }
+
+        // === Одобрить заявку ===
+        function approveRequest(index, request) {
+            if (!confirm('Одобрить заявку?')) return;
+
+            const requests = JSON.parse(localStorage.getItem('employmentRequests') || '[]');
+            requests[index] = { ...request, status: 'отправлена' }
+                        localStorage.setItem('employmentRequests', JSON.stringify(requests));
+            logAction(`Заявка ${request.name} одобрена админом ${window.currentAdmin}`);
+            sendTelegram(`✅ Заявка одобрена: ${request.name} (${request.department})`);
+            loadRequests();
+        }
+
+        // === Отклонить заявку ===
+        function rejectRequest(index) {
+            if (!confirm('Отклонить заявку?')) return;
+
+            const requests = JSON.parse(localStorage.getItem('employmentRequests') || '[]');
+            requests[index].status = 'отказано';
+            localStorage.setItem('employmentRequests', JSON.stringify(requests));
+
+            logAction(`Заявка отклонена: ${requests[index].name}`);
+            sendTelegram(`❌ Заявка отклонена: ${requests[index].name}`);
+            loadRequests();
+        }
+
+        // === Панель управления админами ===
+        function loadUsersPanel() {
+            const container = document.getElementById('users');
+            container.innerHTML = '<h3>👥 Управление администраторами</h3>';
+
+            if (window.currentRole !== 'full') {
+                container.innerHTML += '<p style="color: #8B0000;">❌ Только главный админ может управлять пользователями.</p>';
+                return;
+            }
+
+            container.innerHTML += `
+                <div style="margin-bottom: 30px; padding: 20px; background: rgba(0,0,0,0.5); border-radius: 6px;">
+                    <h4>➕ Создать администратора</h4>
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="new-login" placeholder="admin_sby">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="new-pass" placeholder="Надёжный пароль">
+                    </div>
+                    <div class="form-group">
+                        <label>Права</label>
+                        <select id="new-role">
+                            <option value="view">Просмотр заявок</option>
+                            <option value="approve">Одобрение заявок</option>
+                            <option value="full">Полный доступ</option>
+                        </select>
+                    </div>
+                    <button onclick="createAdmin()" class="btn full">Создать</button>
+                </div>
+
+                <h4>📋 Администраторы</h4>
+                <div id="users-list">Загрузка...</div>
+            `;
+
+            loadUsersList();
+        }
+
+        // === Загрузить список админов ===
+        function loadUsersList() {
+            const list = document.getElementById('users-list');
+            list.innerHTML = '';
+
+            try {
+                const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
+                const usersArray = Object.entries(accounts).map(([login, data]) => ({ login, ...data }));
+
+                if (usersArray.length === 0) {
+                    list.innerHTML = '<p>Нет администраторов.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Логин</th>
+                            <th>Права</th>
+                            <th>Создан</th>
+                            <th>Последний вход</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody"></tbody>
+                `;
+
+                const tbody = table.querySelector('#users-tbody');
+                usersArray.forEach(user => {
+                    const row = tbody.insertRow();
+
+                    row.insertCell(0).textContent = user.login;
+                    row.insertCell(1).textContent = {
+                        'view': 'Просмотр',
+                        'approve': 'Одобрение',
+                        'full': 'Полный доступ'
+                    }[user.role] || '—';
+
+                    row.insertCell(2).textContent = user.created ? new Date(user.created).toLocaleString() : '—';
+                    row.insertCell(3).textContent = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '—';
+
+                    const statusCell = row.insertCell(4);
+                    statusCell.innerHTML = user.enabled
+                        ? '<span style="color:#006400">✅ Активен</span>'
+                        : '<span style="color:#8B0000">❌ Отключён</span>';
+
+                    const actionsCell = row.insertCell(5);
+                    if (user.login !== 'govadmin') {
+                        const disableBtn = document.createElement('button');
+                        disableBtn.textContent = user.enabled ? 'Отключить' : 'Включить';
+                        disableBtn.className = 'btn';
+                        disableBtn.style.backgroundColor = user.enabled ? '#8B0000' : '#006400';
+                        disableBtn.onclick = () => toggleUser(user.login, !user.enabled);
+                        actionsCell.appendChild(disableBtn);
+                    } else {
+                        actionsCell.textContent = '—';
+                    }
+                });
+
+                list.appendChild(table);
+            } catch (e) {
+                console.error('Ошибка загрузки админов:', e);
+                list.innerHTML = '<p class="error">❌ Ошибка загрузки</p>';
+            }
+        }
+
+        // === Создать админа ===
+        function createAdmin() {
+            const login = document.getElementById('new-login').value.trim();
+            const pass = document.getElementById('new-pass').value.trim();
+            const role = document.getElementById('new-role').value;
+
+            if (!login || !pass) {
+                alert('Введите логин и пароль');
+                return;
+            }
+
+            if (login.length < 3) {
+                alert('Логин должен быть не короче 3 символов');
+                return;
+            }
+
+            try {
+                const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
+
+                if (accounts[login]) {
+                    alert('❌ Админ с таким логином уже существует');
+                    return;
+                }
+
+                accounts[login] = {
+                    password: pass,
+                    role,
+                    created: new Date().toISOString(),
+                    lastLogin: null,
+                    enabled: true
+                };
+
+                localStorage.setItem('admin_accounts', JSON.stringify(accounts));
+                logAction(`Создан админ: ${login} (права: ${role})`);
+                sendTelegram(`🔐 Новый админ: ${login} (${role})`);
+                alert(`✅ Админ ${login} создан`);
+                loadUsersList();
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка сохранения');
+            }
+        }
+
+        // === Включить/отключить админа ===
+        function toggleUser(login, enable) {
+            if (!confirm(`Вы уверены, что хотите ${enable ? 'включить' : 'отключить'} админа ${login}?`)) return;
+
+            try {
+                const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
+                if (!accounts[login]) return;
+
+                accounts[login].enabled = enable;
+                localStorage.setItem('admin_accounts', JSON.stringify(accounts));
+
+                const action = enable ? 'включён' : 'отключён';
+                logAction(`Админ ${login} ${action}`);
+                sendTelegram(`⚠️ Админ ${login} ${action}`);
+                alert(`Админ ${login} ${action}`);
+                loadUsersList();
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка');
+            }
+        }
+
+        // === Загрузка логов ===
+        function loadLogs() {
+            const container = document.getElementById('logs');
+            container.innerHTML = '<h3>📋 Журнал действий</h3>';
+
+            try {
+                const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+                logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                if (logs.length === 0) {
+                    container.innerHTML += '<p>Нет записей.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Админ</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody"></tbody>
+                `;
+
+                const tbody = table.querySelector('#logs-tbody');
+                logs.forEach(log => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = new Date(log.timestamp).toLocaleString();
+                    row.insertCell(1).textContent = log.admin;
+                    row.insertCell(2).textContent = log.action;
+                });
+
+                container.appendChild(table);
+
+                const exportBtn = document.createElement('button');
+                exportBtn.textContent = '💾 Экспорт в JSON';
+                exportBtn.className = 'btn';
+                exportBtn.style.marginTop = '20px';
+                exportBtn.onclick = exportLogs;
+                container.appendChild(exportBtn);
+            } catch (e) {
+                console.error('Ошибка логов:', e);
+                container.innerHTML += '<p class="error">❌ Ошибка чтения логов</p>';
+            }
+        }
+
+        // === Экспорт логов ===
+        function exportLogs() {
+            const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+            const dataStr = JSON.stringify(logs, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `admin_logs_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // === Логирование действий ===
+        function logAction(message) {
+            const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                admin: window.currentAdmin,
+                action: message
+            });
+            if (logs.length > 1000) logs.shift();
+            localStorage.setItem('admin_logs', JSON.stringify(logs));
+        }
+
+        // === Telegram уведомления ===
+        // Замените YOUR_BOT_TOKEN и YOUR_CHAT_ID
+        const TELEGRAM_BOT_TOKEN = '8646752273:AAGWwaKB_bQrQas6YKkeofQYaD4VZrompbs'; // ← Вставьте свой
+        const TELEGRAM_CHAT_ID = '1303749255';     // ← Вставьте свой
+
+        function sendTelegram(message) {
+            if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_BOT_TOKEN.includes('YOUR') || TELEGRAM_CHAT_ID.includes('YOUR')) {
+                console.warn('Telegram не настроен. Сообщение не отправлено:', message);
+                return;
+            }
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            const data = {
+                chat_id: TELEGRAM_CHAT_ID,
+                text: `[Админ-панель] ${message}`,
+                parse_mode: 'HTML'
+            };
+
+            // Отправка без блокировки интерфейса
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).catch(err => console.error('Ошибка Telegram:', err));
+        }
+
+        // === Загрузка при старте ===
+        window.onload = function() {
+            try {
+                initSystem();
+                showLogin();
+            } catch (e) {
+                console.error('Ошибка загрузки:', e);
+                document.getElementById('app').innerHTML = '<p class="error">❌ Критическая ошибка. Проверьте консоль (F12).</p>';
+            }
+        };
+    </script>
+</body>
+</html>

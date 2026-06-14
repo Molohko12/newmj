@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест Telegram</title>
+</head>
+<body>
+    <h3>Отправить тестовое сообщение</h3>
+    <input type="text" id="token" placeholder="Bot token" style="width:300px">
+    <input type="text" id="chat" placeholder="Chat ID" style="width:100px">
+    <button onclick="send()">Отправить</button>
+    <p id="result"></p>
+
+    <script>
+        function send() {
+            const token = document.getElementById('token').value;
+            const chat = document.getElementById('chat').value;
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chat,
+                    text: '✅ Тестовое сообщение от админ-панели'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                const res = document.getElementById('result');
+                if (data.ok) {
+                    res.innerHTML = '✅ Сообщение отправлено!';
+                } else {
+                    res.innerHTML = '❌ Ошибка: ' + data.description;
+                }
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = '🌐 Ошибка сети: ' + err.message;
+            });
+        }
+    </script>
+</body>
+</html>

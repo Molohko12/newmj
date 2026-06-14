@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Трудоустройство</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: rgb(15, 150, 87);
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #000000;
+            color: rgb(255, 0, 30);
+            text-align: center;
+            padding: 20px;
+            border-bottom: 3px solid rgb(255, 0, 30);
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background-color: #111;
+            color: #00c80c;
+            border: 1px solid rgb(255, 0, 30);
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #000000;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 0 8px rgba(255, 0, 30, 0.4);
+        }
+        .btn:hover {
+            background-color: #0cc80c;
+            color: black;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: rgb(255, 0, 30);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ТРУДОУСТРОЙСТВО В ОРГАНЫ ШТАТА</h1>
+    </div>
+
+    <div class="container">
+        <form id="employment-form">
+            <div class="form-group">
+                <label>Статик (ID)</label>
+                <input type="text" id="static" required>
+            </div>
+            <div class="form-group">
+                <label>Имя и фамилия</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label>Discord</label>
+                <input type="text" id="discord" required placeholder="@user#1234">
+            </div>
+            <div class="form-group">
+                <label>Отдел для трудоустройства</label>
+                <select id="department" required>
+                    <option value="">Выберите отдел</option>
+                    <option value="judiciary">Судебный корпус</option>
+                    <option value="advocacy">Адвокатура</option>
+                    <option value="finance">Министерство финансов</option>
+                    <option value="security">Министерство национальной безопасности</option>
+                    <option value="governor">Администрация губернатора</option>
+                    <option value="prosecution">Прокуратура</option>
+                    <option value="defense">Министерство обороны</option>
+                    <option value="senate">Сенат</option>
+                    <option value="culture">Министерство культуры</option>
+                    <option value="health">Министерство здравоохранения</option>
+                    <option value="usss">USSS</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Отправить заявку</button>
+        </form>
+        <a href="index.html" class="back-link">← На главную</a>
+    </div>
+
+    <script>
+        // Сохранение данных о посетителе
+        function saveVisitorToLogs() {
+            const visitorData = {
+                id: Date.now(),
+                userAgent: navigator.userAgent,
+                visitedAt: new Date().toISOString(),
+                page: window.location.pathname
+            };
+
+            const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+            const filename = `visitor_${timestamp}.json`;
+
+            localStorage.setItem(`log_visitor_${filename}`, JSON.stringify({
+                timestamp: new Date().toISOString(),
+                data: visitorData
+            }));
+        }
+
+        // При загрузке страницы — логируем посетителя
+        window.onload = function() {
+            saveVisitorToLogs();
+        };
+
+        // Обработка формы
+        document.getElementById('employment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const static = document.getElementById('static').value;
+            const name = document.getElementById('name').value;
+            const discord = document.getElementById('discord').value;
+            const department = document.getElementById('department').value;
+
+            const request = {
+                id: Date.now(),
+                static,
+                name,
+                discord,
+                department,
+                status: 'ожидает',
+                submittedAt: new Date().toISOString()
+            };
+
+            // Сохраняем заявку в лог
+            const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+            localStorage.setItem(`log_application_${timestamp}.json`, JSON.stringify({
+                timestamp: new Date().toISOString(),
+                data: request
+            }));
+
+            // Сохраняем в общий список заявок
+            const requests = JSON.parse(localStorage.getItem('employmentRequests') || '[]');
+            requests.push(request);
+            localStorage.setItem('employmentRequests', JSON.stringify(requests));
+
+            alert('Заявка отправлена Ожидайте рассмотрения.');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
