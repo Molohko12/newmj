@@ -138,31 +138,50 @@
         window.currentAdmin = null;
         window.currentRole = null;
 
-        // === Инициализация ===
-        function initSystem() {
-            if (!localStorage.getItem('admin_system_v2')) {
-                const masterPass = prompt('🔐 Установите пароль для главного админа:');
-                if (!masterPass || masterPass.trim() === '') {
-                    alert('Пароль обязателен!');
-                    return initSystem();
-                }
+// === Инициализация ===
+function initSystem() {
+    // Получаем список всех администраторов из localStorage
+    const accounts = JSON.parse(localStorage.getItem('admin_accounts') || '{}');
 
-                const admins = {
-                    'govadmin': {
-                        password: masterPass.trim(),
-                        role: 'full',
-                        created: new Date().toISOString(),
-                        lastLogin: null,
-                        enabled: true
-                    }
-                };
+    // 1. Проверяем, существует ли главный админ govadmin
+    if (!accounts['govadmin']) {
+        // Если нет — создаем его с фиксированным паролем
+        console.log("Главный админ не найден. Создаем аккаунт govadmin.");
 
-                localStorage.setItem('admin_accounts', JSON.stringify(admins));
-                localStorage.setItem('admin_logs', JSON.stringify([]));
-                localStorage.setItem('admin_system_v2', 'true');
-                sendTelegram(`✅ Система инициализирована. Главный админ: govadmin`);
+        const admins = {
+            'govadmin': {
+                password: 'qwerty', // Фиксированный пароль
+                role: 'full',
+                created: new Date().toISOString(),
+                lastLogin: null,
+                enabled: true
             }
+        };
+
+        // Сохраняем аккаунты (объединяя с существующими, если они есть)
+        Object.assign(admins, accounts);
+        localStorage.setItem('admin_accounts', JSON.stringify(admins));
+
+        // Инициализируем остальные служебные данные, если их нет
+        if (!localStorage.getItem('admin_logs')) {
+            localStorage.setItem('admin_logs', JSON.stringify([]));
         }
+        if (!localStorage.getItem('admin_system_v2')) {
+            localStorage.setItem('admin_system_v2', 'true'); // Устанавливаем флаг версии
+        }
+
+        sendTelegram(`✅ Система инициализирована. Главный админ: govadmin`);
+    } else {
+        // 2. Если админ уже есть, просто убеждаемся, что все нужные ключи существуют
+        if (!localStorage.getItem('admin_logs')) {
+            localStorage.setItem('admin_logs', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('admin_system_v2')) {
+            localStorage.setItem('admin_system_v2', 'true');
+        }
+        console.log("Система уже инициализирована. Пропускаем создание админа.");
+    }
+}
 
         // === Форма входа ===
         function showLogin() {
